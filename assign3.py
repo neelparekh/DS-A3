@@ -18,6 +18,7 @@ from scipy.ndimage import imread
 import time
 import random
 import copy
+from PIL import Image
 
 
 # Ignore warnings
@@ -59,10 +60,10 @@ class TinyNetTrainDataset(Dataset):
 	def __getitem__(self, idx):
 		label = self.image_paths[idx][0] # get idx image name from dataset
 		image_path = self.image_paths[idx][1] # get idx image from dataset
-		image = imread(image_path)
-		sample = {'image': image, 'label': label}
+		image = Image.open(image_path)
 		if self.transform:
-			sample = self.transform(sample)
+			image = self.transform(image)
+		sample = {'image': image, 'label': label}
 		return sample
 
 class TinyNetValDataset(Dataset):
@@ -96,79 +97,16 @@ class TinyNetValDataset(Dataset):
 	def __getitem__(self, idx):
 		label = self.image_paths[idx][0] # get idx image label from dataset
 		image_path = self.image_paths[idx][1] # get idx image from dataset
-		image = imread(image_path)
-		sample = {'image': image, 'label': label}
+		image = Image.open(image_path)
 		if self.transform:
-			sample = self.transform(sample)
+			image = self.transform(image)
+		sample = {'image': image, 'label': label}
 		return sample
 
 
 ############################ Helper classes/methods ############################
-class ToTensor(object):
-	"""Convert ndarrays in sample to Tensors."""
 
-	def __call__(self, sample):
-		image, label = sample['image'], sample['label']
-		# swap color axis because
-		# numpy image: H x W x C
-		# torch image: C X H X W
-		image = image.transpose((2, 0, 1))
-		return {'image': torch.from_numpy(image),
-				'label': torch.Tensor(label)}
-
-class Norms(object):
-	"""Normalize Numpy Arrays"""
-
-	def __call__(self, sample):
-		image, label = sample['image'].float(), sample['label']
-
-		mean = torch.Tensor([0.485, 0.456, 0.406])
-		std  = torch.Tensor([0.229, 0.224, 0.225])
-
-		print()
-		print('image:',type(image))
-		print('mean:',type(mean))
-		print('std:',type(std))
-		print()
-
-		temp = image - mean
-		image_norm = np.divide(temp, std)
-		return {'image': image_norm,
-				'label': label}
-
-
-class RandomHorizontalFlip(object):
-	"""Horizontally flip the given NumPy Image randomly with a probability of 0.5."""
-
-	def __call__(self, sample):
-		image, label = sample['image'], sample['label']
-		"""
-		Args:
-			img (NumPy Image): Image to be flipped.
-		Returns:
-			NumPy Image: Randomly flipped image.
-		"""
-		if random.random() < 0.5:
-			image = np.flip(image, 1).copy()
-		return {'image': image,
-				'label': label}
-
-class RandomVerticalFlip(object):
-	"""Horizontally flip the given NumPy Image randomly with a probability of 0.5."""
-
-	def __call__(self, sample):
-		image, label = sample['image'], sample['label']
-		"""
-		Args:
-			img (NumPy Image): Image to be flipped.
-		Returns:
-			NumPy Image: Randomly flipped image.
-		"""
-		if random.random() < 0.5:
-			image = np.flip(image, 0).copy()
-		return {'image': image,
-				'label': label}
-
+#None needed
 
 ############################ Set up how our model is trained ############################
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
@@ -200,7 +138,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 				inputs = data['image']
 				label = data['label']
 
-
 				# wrap them in Variable
 				if use_gpu:
 					inputs = Variable(inputs.cuda())
@@ -225,8 +162,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 				# statistics
 				if i%100 == 0:
 					print(i*batch_size)
-				# 	temp = torch.sum(preds == label.data)
-				# 	print('Acc: {}/{} = {:.2f} Percent'.format(temp,21*batch_size,temp/21/batch_size*100))
+				#   temp = torch.sum(preds == label.data)
+				#   print('Acc: {}/{} = {:.2f} Percent'.format(temp,21*batch_size,temp/21/batch_size*100))
 				running_loss += loss.data[0]
 				running_corrects += torch.sum(preds == label.data)
 
@@ -253,21 +190,27 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
 
 ############################ Create datasets and dataloaders for train/val sets ############################
-
-TN_train = TinyNetTrainDataset(root_dir='/Volumes/SeagatePortable/CornellStuff/DS/assignment3/tiny-imagenet-5',
-								transform = transforms.Compose([ 
-												ToTensor(), 
-												Norms() 
+rd = '/Users/neelparekh/Cornell/DSitW/assignment3/DS-A3/tiny-imagenet-5'
+TN_train = TinyNetTrainDataset(root_dir=rd,
+								transform = transforms.Compose([
+												transforms.RandomSizedCrop(224),
+												transforms.RandomHorizontalFlip(),
+												transforms.ToTensor(),
+												transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 											])
 # , RandomVerticalFlip(), RandomHorizontalFlip()])
 								)
-TN_val = TinyNetValDataset(root_dir='/Volumes/SeagatePortable/CornellStuff/DS/assignment3/tiny-imagenet-5',
+TN_val = TinyNetValDataset(root_dir=rd,
 								transform = transforms.Compose([ 
-												ToTensor(), 
-												Norms() 
+												transforms.Scale(256), 
+												transforms.CenterCrop(224),
+												transforms.ToTensor(),
+												transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 											])
 								)
 image_datasets = {'train': TN_train, 'val':TN_val}
+print('example: ', TN_train[0])
+
 batch_size = 4
 dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, num_workers=4)  for x in ['train', 'val']}
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
@@ -315,25 +258,25 @@ torch.save(model_conv,'FFE1')
 # dfs_labs,dfs_preds,dfs_outs = [0]*86,[0]*86,[0]*86
 
 # for i,data in enumerate(dataloaders['val']):
-# 	if i%15 == 0: print(i*batch_size)
-# 	# get the inputs
-# 	inputs = data['image']
-# 	labs = data['labels']
+#   if i%15 == 0: print(i*batch_size)
+#   # get the inputs
+#   inputs = data['image']
+#   labs = data['labels']
 
-# 	# wrap them in Variable
-# 	inputs = Variable(inputs)
+#   # wrap them in Variable
+#   inputs = Variable(inputs)
 
-# 	# forward
-# 	outputs = model18(inputs.float()).data
-# 	predictions = sigm(outputs).round()
+#   # forward
+#   outputs = model18(inputs.float()).data
+#   predictions = sigm(outputs).round()
 
-# 	# save
-# 	outputs_numpy, predictions_numpy,labs_np = outputs.numpy(), predictions.numpy(),labs.numpy()
-# 	dfs_outs[i], dfs_preds[i], dfs_labs[i] = pd.DataFrame(outputs_numpy), pd.DataFrame(predictions_numpy), pd.DataFrame(labs_np)
+#   # save
+#   outputs_numpy, predictions_numpy,labs_np = outputs.numpy(), predictions.numpy(),labs.numpy()
+#   dfs_outs[i], dfs_preds[i], dfs_labs[i] = pd.DataFrame(outputs_numpy), pd.DataFrame(predictions_numpy), pd.DataFrame(labs_np)
 
-# 	# predictionsdf.to_csv('NN_predictions_{:0>3}.csv'.format(i))
-# 	# dfs[i] = pd.DataFrame(labs_np)
-# 	# predictionsdf.index +=1
+#   # predictionsdf.to_csv('NN_predictions_{:0>3}.csv'.format(i))
+#   # dfs[i] = pd.DataFrame(labs_np)
+#   # predictionsdf.index +=1
 
 # dfouts = pd.concat(dfs_outs)
 # dfpred = pd.concat(dfs_preds)
@@ -343,22 +286,22 @@ torch.save(model_conv,'FFE1')
 # dflabs.to_csv('labs.csv')
 
 
-# 	# predictionsdf.to_csv('NN_predictions_{:0>3}.csv'.format(i))
+#   # predictionsdf.to_csv('NN_predictions_{:0>3}.csv'.format(i))
 
-# 	# CM = [0]*21
-# 	# for j in range(21):
-# 	# 	instrument = instrument_names[j]
-# 	# 	truth_instr = truth_numpy[:,j]
-# 	# 	predictions_instr = predictions_numpy[:,j]
-# 	# 	# print('{}\n{}'.format(truth_instr, predictions_instr))
-# 	# 	CM[j] = (instrument, confusion_matrix(truth_instr,predictions_instr) )
+#   # CM = [0]*21
+#   # for j in range(21):
+#   #   instrument = instrument_names[j]
+#   #   truth_instr = truth_numpy[:,j]
+#   #   predictions_instr = predictions_numpy[:,j]
+#   #   # print('{}\n{}'.format(truth_instr, predictions_instr))
+#   #   CM[j] = (instrument, confusion_matrix(truth_instr,predictions_instr) )
 
-# 	# print('CMs:\n{}'.format(CM))
-# 	# # if i%100 == 0: 
-# 	# 	print(i*batch_size)
-# 	# 	temp = torch.sum(pred_probs.data.round().double() == labels.data)
-# 	# 	print('Acc: {}/{} = {:.2f} Percent'.format(temp, batch_size*21, temp/21/batch_size*100))
-# 	# running_corrects += torch.sum(pred_probs.data.round().double() == labels.data)
+#   # print('CMs:\n{}'.format(CM))
+#   # # if i%100 == 0: 
+#   #   print(i*batch_size)
+#   #   temp = torch.sum(pred_probs.data.round().double() == labels.data)
+#   #   print('Acc: {}/{} = {:.2f} Percent'.format(temp, batch_size*21, temp/21/batch_size*100))
+#   # running_corrects += torch.sum(pred_probs.data.round().double() == labels.data)
 
 
 
