@@ -13,8 +13,6 @@ from torchvision.models.resnet import model_urls
 import os
 import pandas as pd
 import numpy as np
-from skimage import io
-from scipy.ndimage import imread
 import time
 import random
 import copy
