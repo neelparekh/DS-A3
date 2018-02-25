@@ -75,17 +75,17 @@ class TinyNetValDataset(Dataset):
 		"""
 		val_dir = os.path.join(root_dir, 'val')
 		train_dir = os.path.join(root_dir, 'train')
+
 		val_img_dir = os.path.join(val_dir, 'images')
 		annotations_path = os.path.join(val_dir, 'val_annotations.txt')
 		ann = pd.read_table(annotations_path,header=None)
-		labels = list(os.walk(train_dir))[0][1]
+		labels = list(os.walk(train_dir))[0][1] # 'n09193705', 'n09246464', 'n09256479', 'n09332890', 'n09428293'
 		imagepaths = []
 		for label in labels:
-			imagepaths.append( [(label_conversion[label], os.path.join(val_img_dir,img)) for img in list(ann.loc[ann[1] == label].loc[:,0]) ] )
+			imagepaths.extend( [(label_conversion[label], os.path.join(val_img_dir,img)) for img in list(ann.loc[ann[1] == label].loc[:,0]) ] )
 		self.image_paths = imagepaths
 		self.root_dir = val_dir #.../val
 		self.transform = transform
-
 
 	def __len__(self):
 		return len(self.image_paths)
