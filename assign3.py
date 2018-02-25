@@ -32,7 +32,6 @@ class TinyNetTrainDataset(Dataset):
 		"""
 		Args:
 			root_dir (string): Directory with the images.
-			image_filename (string): Name of the image file to be used.
 			transform (callable, optional): Optional transform to be applied
 				on a sample.
 		"""
@@ -71,7 +70,6 @@ class TinyNetValDataset(Dataset):
 		"""
 		Args:
 			root_dir (string): Directory with the images.
-			image_filename (string): Name of the image file to be used.
 			transform (callable, optional): Optional transform to be applied
 				on a sample.
 		"""
@@ -188,7 +186,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
 
 ############################ Create datasets and dataloaders for train/val sets ############################
-rd = '/Users/neelparekh/Cornell/DSitW/assignment3/DS-A3/tiny-imagenet-5'
+rd = os.path.join(os.getcwd(),'tiny-imagenet-5')
 TN_train = TinyNetTrainDataset(root_dir=rd,
 								transform = transforms.Compose([
 												transforms.RandomSizedCrop(224),
