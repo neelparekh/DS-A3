@@ -57,7 +57,7 @@ class TinyNetTrainDataset(Dataset):
 	def __getitem__(self, idx):
 		label = self.image_paths[idx][0] # get idx image name from dataset
 		image_path = self.image_paths[idx][1] # get idx image from dataset
-		image = Image.open(image_path)
+		image = Image.open(image_path).convert('RGB')
 		if self.transform:
 			image = self.transform(image)
 		sample = {'image': image, 'label': label}
@@ -93,7 +93,7 @@ class TinyNetValDataset(Dataset):
 	def __getitem__(self, idx):
 		label = self.image_paths[idx][0] # get idx image label from dataset
 		image_path = self.image_paths[idx][1] # get idx image from dataset
-		image = Image.open(image_path)
+		image = Image.open(image_path).convert('RGB')
 		if self.transform:
 			image = self.transform(image)
 		sample = {'image': image, 'label': label}
@@ -205,8 +205,6 @@ TN_val = TinyNetValDataset(root_dir=rd,
 											])
 								)
 image_datasets = {'train': TN_train, 'val':TN_val}
-print('example: ', TN_train[0])
-
 batch_size = 4
 dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, num_workers=4)  for x in ['train', 'val']}
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
