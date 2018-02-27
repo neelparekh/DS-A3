@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 label_conversion = {'n09193705':0 , 'n09246464':1 , 'n09256479':2 , 'n09332890':3 , 'n09428293':4 }
 
 ############################ classes to help load our images into PyTorch ############################
-class TinyNetTrainDataset(Dataset):
+class TinyNetDataset(Dataset):
 	"""TinyNet dataset."""
 
 	def __init__(self, root_dir, transform=None):
@@ -63,7 +63,7 @@ class TinyNetTrainDataset(Dataset):
 		sample = {'image': image, 'label': label}
 		return sample
 
-class TinyNetValDataset(Dataset):
+class TinyNetDataset(Dataset):
 	"""TinyNet dataset."""
 
 	def __init__(self, root_dir, transform=None):
@@ -98,11 +98,6 @@ class TinyNetValDataset(Dataset):
 			image = self.transform(image)
 		sample = {'image': image, 'label': label}
 		return sample
-
-
-############################ Helper classes/methods ############################
-
-#None needed
 
 ############################ Set up how our model is trained ############################
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
@@ -158,8 +153,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 				# statistics
 				if i%100 == 0:
 					print(i*batch_size)
-				#   temp = torch.sum(preds == label.data)
-				#   print('Acc: {}/{} = {:.2f} Percent'.format(temp,21*batch_size,temp/21/batch_size*100))
 				running_loss += loss.data[0]
 				running_corrects += torch.sum(preds == label.data)
 
@@ -187,8 +180,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
 ############################ Create datasets and dataloaders for train/val sets ############################
 rd = os.path.join(os.getcwd(),'tiny-imagenet-5')
-TN_train = TinyNetTrainDataset(root_dir=rd,
-								transform = transforms.Compose([
+TN_train = TinyNetDataset (root_dir=rd,transform = transforms.Compose([
 												transforms.RandomSizedCrop(224),
 												transforms.RandomHorizontalFlip(),
 												transforms.ToTensor(),
@@ -196,8 +188,7 @@ TN_train = TinyNetTrainDataset(root_dir=rd,
 											])
 # , RandomVerticalFlip(), RandomHorizontalFlip()])
 								)
-TN_val = TinyNetValDataset(root_dir=rd,
-								transform = transforms.Compose([ 
+TN_val = TinyNetDataset (root_dir=rd,transform = transforms.Compose([ 
 												transforms.Scale(256), 
 												transforms.CenterCrop(224),
 												transforms.ToTensor(),
@@ -205,18 +196,19 @@ TN_val = TinyNetValDataset(root_dir=rd,
 											])
 								)
 image_datasets = {'train': TN_train, 'val':TN_val}
-batch_size = 4
+batch_size = 5
 dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, num_workers=4)  for x in ['train', 'val']}
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
 use_gpu = torch.cuda.is_available()
 
+print(TN_val[0])
 
 ########################### set up our pre-trained model and training params ############################
 #################################### Use as fixed feature extractor #####################################
 
 # model_urls['resnet18'] = model_urls['resnet152'].replace('https://', 'http://')
 
-model_conv = models.resnet34(pretrained=True)
+model_conv = models.resnet50(pretrained=True)
 for param in model_conv.parameters():
 	param.requires_grad = False
 num_ftrs = model_conv.fc.in_features
@@ -229,10 +221,7 @@ if use_gpu:
 # Set loss function criterion
 criterion = nn.CrossEntropyLoss()
 
-# print('Traceback (most recent call last):\n  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 40, in _worker_loop\n    samples = collate_fn([dataset[i] for i in batch_indices])\n  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/torch/utils/data/dataloader.py", line 40, in <listcomp>\n    samples = collate_fn([dataset[i] for i in batch_indices])\n  File "assign3.py", line 62, in __getitem__\n    sample = self.transform(sample)\n  File "/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages/torchvision/transforms.py", line 34, in __call__\n    img = t(img)\n  File "assign3.py", line 108, in __call__\n    image, label = sample[\'image\'], sample[\'label\']\nKeyError: \'label\'\n')
-
-# Observe that only parameters of final layer are being optimized as
-# opoosed to before.
+# Observe that only parameters of final layer are being optimized as opoosed to before.
 optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)
 
 # Decay LR by a factor of 0.1 every 7 epochs
@@ -240,8 +229,8 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
 
 
 ########################### train our model ############################
-model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=50)
-torch.save(model_conv,'FFE1')
+# model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=50)
+# torch.save(model_conv,'FFE1')
 
 
 # ############################ create model output with correct metrics ############################
