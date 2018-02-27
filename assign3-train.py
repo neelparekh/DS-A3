@@ -95,7 +95,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
 	# load best model weights
 	model.load_state_dict(best_model_wts)
-	return modelh
+	return model
 
 
 
@@ -125,7 +125,7 @@ use_gpu = torch.cuda.is_available()
 ########################### set up our pre-trained model and training params ############################
 #################################### Use as fixed feature extractor #####################################
 
-model_conv = models.resnet50(pretrained=True)
+model_conv = models.resnet34(pretrained=True)
 for param in model_conv.parameters():
 	param.requires_grad = False
 num_ftrs = model_conv.fc.in_features
