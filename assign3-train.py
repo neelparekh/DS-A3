@@ -16,6 +16,8 @@ import numpy as np
 import time
 import random
 import copy
+import matplotlib.pyplot as plt
+
 
 
 # Ignore warnings
