@@ -27,29 +27,29 @@ label_conversion = {'n09193705':0 , 'n09246464':1 , 'n09256479':2 , 'n09332890':
 
 ############################ Helper classes/methods ############################
 
-def visualize_model(model, num_images=6):
-    images_so_far = 0
-    fig = plt.figure()
+# def visualize_model(model, num_images=6):
+#     images_so_far = 0
+#     fig = plt.figure()
 
-    for i, data in enumerate(dataloaders['val']):
-        inputs, labels = data
-        if use_gpu:
-            inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-        else:
-            inputs, labels = Variable(inputs), Variable(labels)
+#     for i, data in enumerate(dataloaders['val']):
+#         inputs, labels = data
+#         if use_gpu:
+#             inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+#         else:
+#             inputs, labels = Variable(inputs), Variable(labels)
 
-        outputs = model(inputs)
-        _, preds = torch.max(outputs.data, 1)
+#         outputs = model(inputs)
+#         _, preds = torch.max(outputs.data, 1)
 
-        for j in range(inputs.size()[0]):
-            images_so_far += 1
-            ax = plt.subplot(num_images//2, 2, images_so_far)
-            ax.axis('off')
-            ax.set_title('predicted: {}'.format(class_names[preds[j]]))
-            imshow(inputs.cpu().data[j])
+#         for j in range(inputs.size()[0]):
+#             images_so_far += 1
+#             ax = plt.subplot(num_images//2, 2, images_so_far)
+#             ax.axis('off')
+#             ax.set_title('predicted: {}'.format(class_names[preds[j]]))
+#             imshow(inputs.cpu().data[j])
 
-            if images_so_far == num_images:
-                return
+#             if images_so_far == num_images:
+#                 return
 
 
 ############################ Set up how our model is trained ############################
@@ -180,7 +180,7 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=3, gamma=0.1)
 model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=50)
 torch.save(model_conv,'FFE1')
 
-visualize_model(model_conv)
+# visualize_model(model_conv)
 
 ########################### set up our pre-trained model and training params ############################
 ########################################## Use as fine-tuning ###########################################
@@ -205,7 +205,7 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 model_ft = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=50)
 torch.save(model_ft,'FT1')
 
-visualize_model(model_ft)
+# visualize_model(model_ft)
 
 
 # class ToTensor(object):
