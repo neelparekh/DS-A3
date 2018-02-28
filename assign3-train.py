@@ -23,6 +23,32 @@ import warnings
 warnings.filterwarnings("ignore")
 label_conversion = {'n09193705':0 , 'n09246464':1 , 'n09256479':2 , 'n09332890':3 , 'n09428293':4 }
 
+############################ Helper classes/methods ############################
+
+def visualize_model(model, num_images=6):
+    images_so_far = 0
+    fig = plt.figure()
+
+    for i, data in enumerate(dataloaders['val']):
+        inputs, labels = data
+        if use_gpu:
+            inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+        else:
+            inputs, labels = Variable(inputs), Variable(labels)
+
+        outputs = model(inputs)
+        _, preds = torch.max(outputs.data, 1)
+
+        for j in range(inputs.size()[0]):
+            images_so_far += 1
+            ax = plt.subplot(num_images//2, 2, images_so_far)
+            ax.axis('off')
+            ax.set_title('predicted: {}'.format(class_names[preds[j]]))
+            imshow(inputs.cpu().data[j])
+
+            if images_so_far == num_images:
+                return
+
 
 ############################ Set up how our model is trained ############################
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
@@ -155,7 +181,7 @@ torch.save(model_conv,'FFE1')
 visualize_model(model_conv)
 
 ########################### set up our pre-trained model and training params ############################
-#################################### Use as fixed feature extractor #####################################
+########################################## Use as fine-tuning ###########################################
 
 
 model_ft = models.resnet34(pretrained=True)
@@ -179,32 +205,6 @@ torch.save(model_ft,'FT1')
 
 visualize_model(model_ft)
 
-
-############################ Helper classes/methods ############################
-
-def visualize_model(model, num_images=6):
-    images_so_far = 0
-    fig = plt.figure()
-
-    for i, data in enumerate(dataloaders['val']):
-        inputs, labels = data
-        if use_gpu:
-            inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-        else:
-            inputs, labels = Variable(inputs), Variable(labels)
-
-        outputs = model(inputs)
-        _, preds = torch.max(outputs.data, 1)
-
-        for j in range(inputs.size()[0]):
-            images_so_far += 1
-            ax = plt.subplot(num_images//2, 2, images_so_far)
-            ax.axis('off')
-            ax.set_title('predicted: {}'.format(class_names[preds[j]]))
-            imshow(inputs.cpu().data[j])
-
-            if images_so_far == num_images:
-                return
 
 # class ToTensor(object):
 #     """Convert ndarrays in sample to Tensors."""
