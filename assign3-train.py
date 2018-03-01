@@ -157,7 +157,9 @@ use_gpu = torch.cuda.is_available()
 ########################### set up our pre-trained model and training params ############################
 #################################### Use as fixed feature extractor #####################################
 
-model_conv = models.resnet34(pretrained=True)
+print('Trying Frozen Weights (FFE):')
+
+model_conv = models.resnet50(pretrained=True)
 for param in model_conv.parameters():
 	param.requires_grad = False
 num_ftrs = model_conv.fc.in_features
@@ -185,8 +187,9 @@ torch.save(model_conv,'FFE1')
 ########################### set up our pre-trained model and training params ############################
 ########################################## Use as fine-tuning ###########################################
 
+print('Trying Finetuning (FT):')
 
-model_ft = models.resnet34(pretrained=True)
+model_ft = models.resnet50(pretrained=True)
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, 5)
 
