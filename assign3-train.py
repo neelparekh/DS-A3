@@ -25,33 +25,6 @@ import warnings
 warnings.filterwarnings("ignore")
 label_conversion = {'n09193705':0 , 'n09246464':1 , 'n09256479':2 , 'n09332890':3 , 'n09428293':4 }
 
-############################ Helper classes/methods ############################
-
-# def visualize_model(model, num_images=6):
-#     images_so_far = 0
-#     fig = plt.figure()
-
-#     for i, data in enumerate(dataloaders['val']):
-#         inputs, labels = data
-#         if use_gpu:
-#             inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-#         else:
-#             inputs, labels = Variable(inputs), Variable(labels)
-
-#         outputs = model(inputs)
-#         _, preds = torch.max(outputs.data, 1)
-
-#         for j in range(inputs.size()[0]):
-#             images_so_far += 1
-#             ax = plt.subplot(num_images//2, 2, images_so_far)
-#             ax.axis('off')
-#             ax.set_title('predicted: {}'.format(class_names[preds[j]]))
-#             imshow(inputs.cpu().data[j])
-
-#             if images_so_far == num_images:
-#                 return
-
-
 ############################ Set up how our model is trained ############################
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     since = time.time()
@@ -157,32 +130,30 @@ use_gpu = torch.cuda.is_available()
 ########################### set up our pre-trained model and training params ############################
 #################################### Use as fixed feature extractor #####################################
 
-print('Trying Frozen Weights (FFE):')
+# print('Trying Frozen Weights (FFE):')
 
-model_conv = models.resnet50(pretrained=True)
-for param in model_conv.parameters():
-	param.requires_grad = False
-num_ftrs = model_conv.fc.in_features
-model_conv.fc = nn.Linear(num_ftrs, 5)
+# model_conv = models.resnet50(pretrained=True)
+# for param in model_conv.parameters():
+# 	param.requires_grad = False
+# num_ftrs = model_conv.fc.in_features
+# model_conv.fc = nn.Linear(num_ftrs, 5)
 
-if use_gpu:
-	model_conv = model_conv.cuda()
+# if use_gpu:
+# 	model_conv = model_conv.cuda()
 
-# Set loss function criterion
-criterion = nn.CrossEntropyLoss()
+# # Set loss function criterion
+# criterion = nn.CrossEntropyLoss()
 
-# Observe that only parameters of final layer are being optimized as opposed to before.
-optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.01, momentum=0.9)
+# # Observe that only parameters of final layer are being optimized as opposed to before.
+# optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.01, momentum=0.9)
 
-# Decay LR by a factor of 0.1 every 7 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=3, gamma=0.1)
+# # Decay LR by a factor of 0.1 every 7 epochs
+# exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=3, gamma=0.1)
 
 
-########################### train our model ############################
-model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=50)
-torch.save(model_conv,'FFE1')
-
-# visualize_model(model_conv)
+# ########################### train our model ############################
+# model_conv = train_model(model_conv, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=50)
+# torch.save(model_conv,'FFE1')
 
 ########################### set up our pre-trained model and training params ############################
 ########################################## Use as fine-tuning ###########################################
@@ -208,8 +179,7 @@ exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 model_ft = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=50)
 torch.save(model_ft,'FT1')
 
-# visualize_model(model_ft)
-
+######################################### Helper classes/methods #########################################
 
 # class ToTensor(object):
 #     """Convert ndarrays in sample to Tensors."""
